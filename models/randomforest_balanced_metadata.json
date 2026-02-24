@@ -1,7 +1,7 @@
 {
     "model_name": "random_forest_smote_pipeline",
-    "saved_at": "2026-02-24T13:42:26.231971Z",
-    "model_path": "models\\random_forest_smote_pipeline.joblib",
+    "saved_at": "2026-02-24T16:46:42.705384Z",
+    "model_path": "models\\random_forest_smote_pipeline.pkl",
     "n_estimators": 100,
     "max_depth": 10,
     "class_weight": "balanced",
