@@ -1,0 +1,40 @@
+{
+  "selected_model_name": "LogisticRegressionBalanced",
+  "features": [
+    "machine_type",
+    "maintenance_age_days",
+    "vib_mean",
+    "vib_std",
+    "vib_rms",
+    "temp_mean",
+    "temp_max",
+    "current_mean",
+    "current_peak",
+    "acoustic_energy",
+    "rpm_mean",
+    "oil_particle_count",
+    "hour",
+    "day_of_week",
+    "is_weekend"
+  ],
+  "train_size": 57368,
+  "test_size": 40000,
+  "class_ratio_train": 0.5,
+  "scores_default_threshold_0_5": {
+    "threshold": 0.5,
+    "recall": 0.6811023622047244,
+    "precision": 0.27840680498879244,
+    "f1": 0.3952511117457468,
+    "pr_auc": 0.2965625433390726,
+    "roc_auc": 0.7018342017862581
+  },
+  "scores_tuned_threshold": {
+    "threshold": 0.4749999999999999,
+    "recall": 0.7214566929133859,
+    "precision": 0.2735366243736006,
+    "f1": 0.3966756861229223,
+    "pr_auc": 0.2965625433390726,
+    "roc_auc": 0.7018342017862581
+  },
+  "selected_threshold_f1": 0.4749999999999999
+}
