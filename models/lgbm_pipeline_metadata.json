@@ -1,0 +1,31 @@
+{
+  "features": [
+    "machine_type",
+    "maintenance_age_days",
+    "vib_mean",
+    "vib_std",
+    "vib_rms",
+    "temp_mean",
+    "temp_max",
+    "current_mean",
+    "current_peak",
+    "acoustic_energy",
+    "rpm_mean",
+    "oil_particle_count"
+  ],
+  "num_train": 57368,
+  "num_test": 40000,
+  "metrics_default": {
+    "roc_auc": 0.6985633861414366,
+    "f1": 0.3938737282844236,
+    "recall": 0.7539370078740157,
+    "precision": 0.2665672383793189
+  },
+  "metrics_tuned": {
+    "roc_auc": 0.6985633861414366,
+    "f1": 0.3960198240424142,
+    "recall": 0.7246906636670416,
+    "precision": 0.27245334883966804,
+    "best_threshold": 0.5177180032705383
+  }
+}
