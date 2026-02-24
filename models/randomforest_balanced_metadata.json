@@ -1,0 +1,33 @@
+{
+    "model_name": "random_forest_smote_pipeline",
+    "saved_at": "2026-02-24T13:42:26.231971Z",
+    "model_path": "models\\random_forest_smote_pipeline.joblib",
+    "n_estimators": 100,
+    "max_depth": 10,
+    "class_weight": "balanced",
+    "train_size": 160000,
+    "test_size": 40000,
+    "class_distribution_train": {
+        "0": 131363,
+        "1": 28637
+    },
+    "class_distribution_test": {
+        "1": 7159,
+        "0": 32841
+    },
+    "accuracy": 0.669675,
+    "per_class_metrics": {
+        "0": {
+            "precision": 0.8670431595482085,
+            "recall": 0.7059163850065467,
+            "f1": 0.7782272277144632,
+            "support": 32841
+        },
+        "1": {
+            "precision": 0.2717538832755241,
+            "recall": 0.5034222656795642,
+            "f1": 0.3529699818813966,
+            "support": 7159
+        }
+    }
+}
