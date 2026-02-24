@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Predictive Maintenance - Demo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 24px;
+        background: #f6f8fb;
+      }
+      .container {
+        max-width: 920px;
+        margin: 0 auto;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 20px;
+      }
+      h1 {
+        margin-top: 0;
+        font-size: 22px;
+      }
+      .meta {
+        margin-bottom: 16px;
+        color: #334155;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      label {
+        font-size: 13px;
+        color: #1f2937;
+      }
+      input, select, button {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 14px;
+      }
+      .actions {
+        margin-top: 16px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button {
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+      }
+      button.secondary {
+        background: #475569;
+      }
+      pre {
+        margin-top: 16px;
+        background: #0b1020;
+        color: #dbeafe;
+        padding: 12px;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      .small {
+        font-size: 12px;
+        color: #64748b;
+      }
+      @media (max-width: 800px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Predictive Maintenance - Test UI</h1>
+      <div class="meta" id="modelMeta">Chargement du modèle...</div>
+
+      <div class="grid" id="formGrid"></div>
+
+      <div class="actions">
+        <button id="btnPredict">Prédire</button>
+        <button class="secondary" id="btnSynthetic">Générer données synthétiques</button>
+        <button class="secondary" id="btnClear">Vider</button>
+      </div>
+
+      <p class="small">La prédiction utilise le seuil tuned du meilleur modèle validé.</p>
+      <pre id="resultBox">Résultat en attente...</pre>
+    </div>
+
+    <script>
+      const numericHints = {
+        maintenance_age_days: [0, 3650, 120],
+        vib_mean: [0, 2, 0.5],
+        vib_std: [0, 1, 0.1],
+        vib_rms: [0, 2, 0.6],
+        temp_mean: [20, 120, 70],
+        temp_max: [20, 150, 85],
+        current_mean: [0, 100, 20],
+        current_peak: [0, 200, 30],
+        acoustic_energy: [0, 500, 140],
+        rpm_mean: [300, 6000, 1500],
+        oil_particle_count: [0, 2000, 220],
+        hour: [0, 23, 12],
+        day_of_week: [0, 6, 2],
+        is_weekend: [0, 1, 0]
+      };
+
+      let requiredFeatures = [];
+
+      function randomBetween(min, max) {
+        return min + Math.random() * (max - min);
+      }
+
+      function syntheticValue(featureName) {
+        const name = featureName.toLowerCase();
+        if (name === 'machine_type') {
+          const types = ['A', 'B', 'C'];
+          return types[Math.floor(Math.random() * types.length)];
+        }
+
+        const hint = numericHints[featureName];
+        if (!hint) {
+          return Number((randomBetween(0, 100)).toFixed(3));
+        }
+
+        const [min, max, fallback] = hint;
+        const value = randomBetween(min, max);
+        if (Number.isNaN(value)) {
+          return fallback;
+        }
+
+        if (Number.isInteger(min) && Number.isInteger(max) && max <= 23) {
+          return Math.round(value);
+        }
+        if (featureName === 'is_weekend') {
+          return Math.random() < 0.28 ? 1 : 0;
+        }
+        if (featureName === 'day_of_week') {
+          return Math.round(value);
+        }
+        return Number(value.toFixed(4));
+      }
+
+      function parseInput(featureName, rawValue) {
+        if (featureName === 'machine_type') {
+          return rawValue || 'A';
+        }
+
+        if (rawValue === '') {
+          return null;
+        }
+
+        const num = Number(rawValue);
+        if (!Number.isFinite(num)) {
+          return null;
+        }
+
+        if (featureName === 'hour' || featureName === 'day_of_week' || featureName === 'is_weekend' || featureName.endsWith('_count') || featureName.endsWith('_days')) {
+          return Math.round(num);
+        }
+        return num;
+      }
+
+      function renderForm(features) {
+        const grid = document.getElementById('formGrid');
+        grid.innerHTML = '';
+
+        features.forEach((feature) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'field';
+
+          const label = document.createElement('label');
+          label.textContent = feature;
+
+          let input;
+          if (feature === 'machine_type') {
+            input = document.createElement('select');
+            ['A', 'B', 'C'].forEach((value) => {
+              const option = document.createElement('option');
+              option.value = value;
+              option.textContent = value;
+              input.appendChild(option);
+            });
+          } else {
+            input = document.createElement('input');
+            input.type = 'number';
+            input.step = 'any';
+            const hint = numericHints[feature];
+            if (hint) {
+              input.min = String(hint[0]);
+              input.max = String(hint[1]);
+              input.placeholder = String(hint[2]);
+            }
+          }
+
+          input.id = `input_${feature}`;
+          wrapper.appendChild(label);
+          wrapper.appendChild(input);
+          grid.appendChild(wrapper);
+        });
+      }
+
+      function getInstanceFromForm() {
+        const instance = {};
+        for (const feature of requiredFeatures) {
+          const input = document.getElementById(`input_${feature}`);
+          const value = parseInput(feature, input.value);
+          if (value === null || value === undefined || value === '') {
+            throw new Error(`Valeur invalide pour ${feature}`);
+          }
+          instance[feature] = value;
+        }
+        return instance;
+      }
+
+      function fillSynthetic() {
+        requiredFeatures.forEach((feature) => {
+          const input = document.getElementById(`input_${feature}`);
+          const value = syntheticValue(feature);
+          input.value = value;
+        });
+      }
+
+      function clearForm() {
+        requiredFeatures.forEach((feature) => {
+          const input = document.getElementById(`input_${feature}`);
+          input.value = '';
+        });
+      }
+
+      async function loadModelInfo() {
+        const response = await fetch('/model-info');
+        if (!response.ok) {
+          throw new Error('Impossible de récupérer /model-info');
+        }
+
+        const info = await response.json();
+        requiredFeatures = info.required_features || [];
+        renderForm(requiredFeatures);
+
+        document.getElementById('modelMeta').textContent =
+          `Modèle: ${info.model_label} (${info.model_file}) | Seuil: ${Number(info.threshold).toFixed(4)}`;
+      }
+
+      async function runPredict() {
+        try {
+          const instance = getInstanceFromForm();
+          const response = await fetch('/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ instances: [instance] })
+          });
+
+          const body = await response.json();
+          if (!response.ok) {
+            throw new Error(JSON.stringify(body, null, 2));
+          }
+
+          document.getElementById('resultBox').textContent = JSON.stringify(body, null, 2);
+        } catch (error) {
+          document.getElementById('resultBox').textContent = `Erreur: ${error.message}`;
+        }
+      }
+
+      document.getElementById('btnPredict').addEventListener('click', runPredict);
+      document.getElementById('btnSynthetic').addEventListener('click', () => {
+        fillSynthetic();
+        document.getElementById('resultBox').textContent = 'Données synthétiques générées. Clique sur Prédire.';
+      });
+      document.getElementById('btnClear').addEventListener('click', () => {
+        clearForm();
+        document.getElementById('resultBox').textContent = 'Formulaire vidé.';
+      });
+
+      loadModelInfo().catch((error) => {
+        document.getElementById('resultBox').textContent = `Erreur d'initialisation: ${error.message}`;
+        document.getElementById('modelMeta').textContent = 'Échec du chargement des informations du modèle.';
+      });
+    </script>
+  </body>
+</html>
